@@ -1,0 +1,191 @@
+<!-- pages/index/index.wxml -->
+
+<!-- 1. 首次使用欢迎界面 -->
+<view class="welcome-screen" wx:if="{{showWelcomeScreen}}">
+  <view class="welcome-container">
+    <view class="welcome-header">
+      <text class="welcome-title">欢迎使用温湿度监控系统</text>
+      <text class="welcome-subtitle">请设置您的设备信息</text>
+    </view>
+    
+    <view class="welcome-form">
+      <view class="form-group">
+        <text class="form-label">设备名称</text>
+        <input class="form-input" type="text" value="{{tempDeviceName}}" 
+          placeholder="为您的设备起个名字" bindinput="onDeviceNameInput"
+          placeholder-class="placeholder" focus="{{true}}" cursor-spacing="20" cursor="20"/>
+        <text class="form-hint">例如：南头栆棚、北头樱桃棚</text>
+      </view>
+      
+      <view class="form-group">
+        <text class="form-label">设备ID</text>
+        <input class="form-input" type="text" value="{{tempDeviceId}}" 
+          placeholder="请输入设备ID" bindinput="onDeviceIdInput"
+          placeholder-class="placeholder" cursor-spacing="20"/>
+        <text class="form-hint">用于连接您的传感器设备</text>
+      </view>
+      
+      <view class="form-tips">
+        <text class="tip-title">💡 提示：</text>
+        <text class="tip-content">所有信息只保存在您的手机中，不会上传到服务器</text>
+      </view>
+    </view>
+    
+    <view class="welcome-actions">
+      <button class="confirm-btn" bindtap="saveDeviceInfoAndEnter" 
+        disabled="{{!tempDeviceName || !tempDeviceId}}">
+        <text class="btn-text">开始使用</text>
+      </button>
+    </view>
+  </view>
+</view>
+
+<!-- 2. 主界面 -->
+<view class="container" wx:if="{{!showWelcomeScreen}}">
+  <!-- 警报通知面板 -->
+  <view class="alarm-panel" wx:if="{{showAlarmPanel}}">
+    <view class="alarm-content">
+      <view class="alarm-header">
+        <text class="alarm-icon">⚠️</text>
+        <text class="alarm-title">环境异常警报</text>
+        <view class="close-btn" bindtap="closeAlarmPanel">✕</view>
+      </view>
+      <view class="alarm-body">
+        <text class="alarm-message">{{alarmData.message}}</text>
+        <view class="alarm-data">
+          <view class="alarm-item">
+            <text class="alarm-label">温度</text>
+            <text class="alarm-value warning">{{alarmData.temperature}}°C</text>
+          </view>
+          <view class="alarm-item">
+            <text class="alarm-label">湿度</text>
+            <text class="alarm-value warning">{{alarmData.humidity}}%</text>
+          </view>
+          <view class="alarm-item">
+            <text class="alarm-label">时间</text>
+            <text class="alarm-time">{{alarmData.timestamp}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 状态栏 -->
+  <view class="status-bar">
+    <view class="status-item">
+      <view class="status-dot {{statusClass}}"></view>
+      <text class="status-text">{{statusText}}</text>
+    </view>
+    <view class="status-right">
+      <view class="device-name-display" bindtap="toggleSetting">
+        <text class="device-name">{{deviceName}}</text>
+        <!--text class="device-id">ID: {{deviceId}}</text-->
+      </view>
+      <view class="setting-icon" bindtap="toggleSetting">
+        <text class="icon">⚙️</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 第一条数据 -->
+  <view class="first-data-section">
+    <view class="section-title">最新数据</view>
+    <view class="first-data-card">
+      <view class="data-item">
+        <text class="data-label">温度</text>
+        <text class="data-value {{firstData.tempClass}}">{{firstData.temperature}}°C</text>
+      </view>
+      <view class="data-item">
+        <text class="data-label">湿度</text>
+        <text class="data-value {{firstData.humidityClass}}">{{firstData.humidity}}%</text>
+      </view>
+      <view class="data-item">
+        <text class="data-label">时间</text>
+        <text class="data-time">{{firstData.timestamp}}</text>
+      </view>
+      <!-- 新增：告警推送开关 -->
+    <view class="data-item switch-item">
+      <text class="data-label">告警推送</text>
+      <view class="switch-wrapper">
+        <switch 
+          checked="{{isPushEnabled}}" 
+          bindchange="togglePushSwitch"
+          color="#52c41a"
+        />
+        <text class="switch-status">{{isPushEnabled ? '已开启' : '已关闭'}}</text>
+      </view>
+    </view>
+    </view>
+  </view>
+
+  <!-- 统计数据 -->
+  <view class="stats-section">
+    <view class="section-title">24小时统计</view>
+    <view class="stats-card">
+      <view class="stats-category">
+        <text class="stats-title">🌡️ 温度统计</text>
+        <view class="stats-grid">
+          <view class="stat-item"><text class="stat-label">平均值</text><text class="stat-value">{{stats.temperature.avg}}°C</text></view>
+          <view class="stat-item"><text class="stat-label">最高值</text><text class="stat-value">{{stats.temperature.max}}°C</text></view>
+          <view class="stat-item"><text class="stat-label">最低值</text><text class="stat-value">{{stats.temperature.min}}°C</text></view>
+        </view>
+      </view>
+      <view class="stats-category">
+        <text class="stats-title">💧 湿度统计</text>
+        <view class="stats-grid">
+          <view class="stat-item"><text class="stat-label">平均值</text><text class="stat-value">{{stats.humidity.avg}}%</text></view>
+          <view class="stat-item"><text class="stat-label">最高值</text><text class="stat-value">{{stats.humidity.max}}%</text></view>
+          <view class="stat-item"><text class="stat-label">最低值</text><text class="stat-value">{{stats.humidity.min}}%</text></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 数据列表 -->
+  <view class="list-section">
+    <view class="section-title">最近10条记录</view>
+    <view class="list-container">
+      <view class="list-header">
+        <text class="header-cell">温度 (°C)</text>
+        <text class="header-cell">湿度 (%)</text>
+        <text class="header-cell">时间</text>
+      </view>
+      <block wx:for="{{latestData}}" wx:key="index">
+        <view class="list-row">
+          <text class="list-cell {{item.tempClass}}">{{item.temperature}}</text>
+          <text class="list-cell {{item.humidityClass}}">{{item.humidity}}</text>
+          <text class="list-cell time">{{item.timestamp}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 刷新按钮 -->
+  <view class="refresh-area">
+    <button class="refresh-btn" bindtap="onRefresh" loading="{{loading}}">
+      <text class="btn-text">{{loading ? '刷新中...' : '刷新数据'}}</text>
+    </button>
+  </view>
+
+  <!-- 设置面板 -->
+  <view class="setting-panel" wx:if="{{showSetting}}">
+    <view class="setting-content">
+      <view class="setting-title">修改设备信息</view>
+      <view class="input-group">
+        <text class="input-label">设备名称</text>
+        <input class="device-input" type="text" value="{{tempDeviceName}}" 
+          placeholder="设备名称" bindinput="onDeviceNameInput" placeholder-class="placeholder" focus="{{true}}" cursor-spacing="20"/>
+      </view>
+      <view class="input-group">
+        <text class="input-label">设备ID</text>
+        <input class="device-input" type="text" value="{{tempDeviceId}}" 
+          placeholder="设备ID" bindinput="onDeviceIdInput" placeholder-class="placeholder" cursor-spacing="20"/>
+        <text class="input-hint">修改设备ID将重新加载数据</text>
+      </view>
+      <view class="button-group">
+        <button class="btn-cancel" bindtap="toggleSetting">取消</button>
+        <button class="btn-save" bindtap="saveDeviceInfo">保存</button>
+      </view>
+    </view>
+  </view>
+</view>
